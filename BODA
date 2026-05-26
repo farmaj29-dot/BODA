@@ -1,0 +1,104 @@
+AI Agents → propose decisions → Simulation Engine → score results → human/override → execution
+export class SimulationEngine {
+  static simulate(state: any, action: any) {
+    let result = { ...state };
+
+    if (action.type === "INCREASE_ADS") {
+      result.revenue *= 1.2;
+      result.cost += 200;
+    }
+
+    if (action.type === "LOWER_PRICE") {
+      result.sales += 30;
+      result.margin -= 10;
+    }
+
+    if (action.type === "RESTOCK") {
+      result.inventory += 100;
+      result.cost += 500;
+    }
+
+    return result;
+  }
+}
+export class DecisionScorer {
+  static score(state: any) {
+    return (
+      state.revenue -
+      state.cost +
+      state.sales * 2
+    );
+  }
+}
+export class AIDecisionMaker {
+  static propose() {
+    return [
+      { type: "INCREASE_ADS" },
+      { type: "LOWER_PRICE" },
+      { type: "RESTOCK" },
+    ];
+  }
+}
+export function runSimulation(initialState: any) {
+  const actions = AIDecisionMaker.propose();
+
+  let bestState = initialState;
+  let bestScore = -Infinity;
+
+  for (const action of actions) {
+    const simulated = SimulationEngine.simulate(
+      initialState,
+      action
+    );
+
+    const score = DecisionScorer.score(simulated);
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestState = simulated;
+    }
+  }
+
+  return {
+    bestState,
+    bestScore,
+  };
+}
+export class LearningMemory {
+  private static memory: any[] = [];
+
+  static store(simulation: any) {
+    this.memory.push(simulation);
+  }
+
+  static getHistory() {
+    return this.memory;
+  }
+}
+export class ControlLayer {
+  static approve(action: any) {
+    return {
+      approved: action.score > 80,
+      action,
+    };
+  }
+}
+export class BusinessBrain {
+  static tick(state: any) {
+    const result = runSimulation(state);
+
+    LearningMemory.store(result);
+
+    return {
+      recommendation: result.bestState,
+      confidence: result.bestScore,
+    };
+  }
+}
+1. AI proposes actions
+2. Simulation engine runs scenarios
+3. Scoring system evaluates results
+4. Best decision selected
+5. Human approval layer (optional)
+6. Execution in real system
+7. Memory updated
